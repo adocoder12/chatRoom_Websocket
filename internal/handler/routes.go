@@ -20,12 +20,12 @@ func (app *Application) SetupRoutes() http.Handler {
 	mux.NotFound(app.notFound)
 	mux.MethodNotAllowed(app.methodNotAllowed)
 
-	// Chat page (uncomment when the handler exists)
-	// mux.Get("/", app.HomeHandler)
+	// Chat page: index.html embedded in the binary
+	mux.Get("/", app.HomeHandler)
 
 	mux.Route("/api/v1", func(api chi.Router) {
-		// WebSocket: stays open, so NO timeout here (uncomment when the handler exists)
-		// api.Get("/ws", app.ChatHandler)
+		// WebSocket: stays open, so NO timeout here
+		api.Get("/ws", app.ChatHandler)
 
 		// Normal request/response routes: timeout is fine
 		api.Group(func(r chi.Router) {

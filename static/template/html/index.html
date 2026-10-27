@@ -42,12 +42,16 @@
       function connect() {
         const username =
           document.getElementById("username").value || "anonymous";
-        ws = new WebSocket(`ws://localhost:8080/ws?username=${username}`);
+        // location.host = same host:port that served this page (matches gorilla's same-origin check)
+        ws = new WebSocket(
+          `ws://${location.host}/api/v1/ws?username=${encodeURIComponent(username)}`,
+        );
 
         ws.onmessage = function (event) {
           const msg = JSON.parse(event.data);
           const div = document.createElement("div");
-          if (msg.type === "join" || msg.type === "leave") {
+          if (msg.type !== "message") {
+            // join / leave / system: grey italic text from the server
             div.className = "system";
             div.textContent = msg.content;
           } else {
@@ -55,14 +59,28 @@
           }
           document.getElementById("messages").appendChild(div);
         };
+
+        ws.onclose = function () {
+          const div = document.createElement("div");
+          div.className = "system";
+          div.textContent = "Disconnected.";
+          document.getElementById("messages").appendChild(div);
+        };
+      }
+
+      // Sending before Connect (or after the server closed) would throw.
+      function isOpen() {
+        return ws && ws.readyState === WebSocket.OPEN;
       }
 
       function joinRoom() {
+        if (!isOpen()) return alert("Connect first.");
         const room = document.getElementById("room").value;
         ws.send(JSON.stringify({ type: "join", room: room }));
       }
 
       function sendMessage() {
+        if (!isOpen()) return alert("Connect first.");
         const content = document.getElementById("message").value;
         ws.send(JSON.stringify({ type: "message", content: content }));
         document.getElementById("message").value = "";

@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/adocoder12/chatRoom/internal/chat"
 	"github.com/adocoder12/chatRoom/internal/config"
 	"github.com/adocoder12/chatRoom/internal/handler"
 )
@@ -39,7 +40,10 @@ func run(logger *slog.Logger) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	app := handler.NewApplication(logger, cfg, version)
+	hub := chat.NewHub(logger)
+	go hub.Run(ctx)
+
+	app := handler.NewApplication(logger, cfg, version, hub)
 
 	server := &http.Server{
 		Addr:         ":" + cfg.SrvPort,
